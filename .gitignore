@@ -1,0 +1,15 @@
+.dart_tool/
+.flutter-plugins*
+.packages
+.pub-cache/
+build/
+coverage/
+android/.gradle/
+android/local.properties
+ios/Flutter/ephemeral/
+ios/Pods/
+ios/Runner.xcworkspace/
+*.iml
+.idea/
+.vscode/
+.DS_Store
