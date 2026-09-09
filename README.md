@@ -33,6 +33,7 @@
 - [Завдання етапу 01](docs/STAGE_01.md)
 - [Завдання етапу 02А](docs/STAGE_02A.md)
 - [Правила роботи з кодом](AGENTS.md)
+- [Хмарна розробка та передача роботи](docs/DEVELOPMENT.md)
 
 ## Flutter SDK
 
@@ -79,28 +80,22 @@ fvm flutter pub get
 flutter pub get
 flutter run -d chrome       # web
 flutter run                 # підключений Android/iPhone
-dart format --output=none --set-exit-if-changed lib test
-flutter analyze
-flutter test
-flutter build web
+bash tool/check.sh          # залежності, формат, аналіз, тести, web
 ```
 
-Перевірка етапу 02А 2026-09-09 у GitHub Actions, Flutter 3.35.4:
+Етап 02А перевірено в GitHub Actions на Flutter 3.35.4 / Dart 3.9.2:
+форматування без змін, аналіз без зауважень, **26 успішних тестів** та
+release-збірка web. [Підтверджений запуск для `4e37125`](https://github.com/AlexMatsi/educator-cabinet/actions/runs/34348741011).
 
-- Два запуски `flutter pub get` — без змін у закоміченому `pubspec.lock`.
-- `dart format --output=none --set-exit-if-changed lib test` — без змін.
-- `flutter analyze` — без зауважень.
-- `flutter test` — 26 тестів пройдено.
-- `flutter build web` — успішна release-збірка.
-- `git diff --check` — успішно.
+CI та хмарний агент використовують єдину команду `bash tool/check.sh`.
+Вона перевіряє залежності з `--enforce-lockfile` та відсутність змін у
+`pubspec.lock`. Для оновлення залежностей спочатку виконайте `flutter pub get`
+та збережіть сформований lock-файл. Після кожної зміни агент перевіряє новий
+запуск CI для актуального commit у PR, а не покладається на старий результат.
 
-[Перевірений запуск CI для коду 4e37125](https://github.com/AlexMatsi/educator-cabinet/actions/runs/34348741011).
-Workflow `.github/workflows/flutter.yml` повторює ці перевірки для кожного PR.
-SDK у локальному середовищі агента недоступний; наведені результати отримано
-на runner GitHub Actions. Тест повторного відкриття використовує справжній
-адаптер SharedPreferences з підміною платформного сховища; він не замінює
-перевірку перезапуску застосунку на фізичному iPhone.
-
+Тест повторного відкриття використовує справжній адаптер SharedPreferences із
+підміною платформного сховища; він не замінює перевірку перезапуску застосунку
+на фізичному iPhone. Результати вище отримано на runner GitHub Actions.
 Тести охоплюють JSON round-trip, версію схеми, цілісність ID і `classId`,
 помилки читання та запису, `false` від запису, збереження пошкодженого документа,
 повторну ініціалізацію сховища та відсутність повторного seed. Також вони
