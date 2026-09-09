@@ -29,5 +29,15 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Сформувати lock-файл для перевірки
+        run: |
+          flutter pub get
+          python3 - <<'PY'
+          import json, pathlib
+          print('LOCK_FILE_JSON=' + json.dumps({
+              'content': pathlib.Path('pubspec.lock').read_text(),
+          }))
+          PY
+
       - name: Перевірити залежності, код, тести та web-збірку
         run: bash tool/check.sh

@@ -176,6 +176,57 @@ void main() {
     }
   });
 
+  test('pending plaintext cleanup resumes safely on next load', () async {
+    final plaintext = codec.encode(DemoRepository.data);
+    final store = MemoryStore({
+      EncryptedStudentRepository.plaintextStorageKey: plaintext,
+    })..failDelete = true;
+    final keys = FakeKeyProvider();
+
+    await expectLater(
+      EncryptedStudentRepository(store: store, keyProvider: keys).load(),
+      throwsA(isA<StudentStorageException>()),
+    );
+    expect(store.values[EncryptedStudentRepository.plaintextStorageKey], plaintext);
+    expect(store.values[EncryptedStudentRepository.encryptedStorageKey], isNotNull);
+
+    store.failDelete = false;
+    final reopened = EncryptedStudentRepository(store: store, keyProvider: keys);
+    expect(codec.encode(await reopened.load()), plaintext);
+    expect(
+      store.values,
+      isNot(contains(EncryptedStudentRepository.plaintextStorageKey)),
+    );
+  });
+
+  test('conflicting plaintext is never deleted', () async {
+    final store = MemoryStore();
+    final keys = FakeKeyProvider(key: key);
+    final repository = EncryptedStudentRepository(store: store, keyProvider: keys);
+    await repository.save(DemoRepository.data);
+    store.values[EncryptedStudentRepository.plaintextStorageKey] =
+        codec.encode(const StudentData(classes: [], students: []));
+
+    await expectLater(repository.load(), throwsA(isA<StudentStorageException>()));
+    expect(
+      store.values[EncryptedStudentRepository.plaintextStorageKey],
+      isNotNull,
+    );
+  });
+
+  test('empty storage is seeded only once', () async {
+    final store = MemoryStore();
+    final keys = FakeKeyProvider();
+    final first = EncryptedStudentRepository(store: store, keyProvider: keys);
+    expect(codec.encode(await first.load()), codec.encode(DemoRepository.data));
+    final envelope = store.values[EncryptedStudentRepository.encryptedStorageKey];
+
+    final second = EncryptedStudentRepository(store: store, keyProvider: keys);
+    expect(codec.encode(await second.load()), codec.encode(DemoRepository.data));
+    expect(store.values[EncryptedStudentRepository.encryptedStorageKey], envelope);
+    expect(keys.creates, 1);
+  });
+
   test('corrupt encrypted data and secure-storage failures are controlled', () async {
     final corruptStore = MemoryStore({
       EncryptedStudentRepository.encryptedStorageKey: '{broken',

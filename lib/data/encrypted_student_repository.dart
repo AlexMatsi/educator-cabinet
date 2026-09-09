@@ -28,7 +28,13 @@ class EncryptedStudentRepository implements StudentRepository {
   Future<StudentData> load() async {
     final encrypted = _read(encryptedStorageKey);
     final plaintext = _read(plaintextStorageKey);
-    if (encrypted != null) return _decryptDocument(encrypted);
+    if (encrypted != null) {
+      final data = await _decryptDocument(encrypted);
+      if (plaintext != null) {
+        await _finishPlaintextCleanup(plaintext, data);
+      }
+      return data;
+    }
     if (plaintext != null) return _migrate(plaintext);
 
     final key = await _createKey();
@@ -80,6 +86,33 @@ class EncryptedStudentRepository implements StudentRepository {
         'Перевірка зашифрованих даних після міграції не вдалася.',
       );
     }
+    await _deletePlaintext();
+    return verified;
+  }
+
+  Future<void> _finishPlaintextCleanup(
+    String plaintext,
+    StudentData encryptedData,
+  ) async {
+    late final StudentData plaintextData;
+    try {
+      plaintextData = _codec.decode(plaintext);
+    } on Object catch (error) {
+      throw StudentStorageException(
+        'Незашифрована копія після міграції пошкоджена. Її не видалено.',
+        error,
+      );
+    }
+    if (_codec.encode(plaintextData) != _codec.encode(encryptedData)) {
+      throw const StudentStorageException(
+        'Зашифрована й незашифрована копії не збігаються. '
+        'Жодну копію не видалено.',
+      );
+    }
+    await _deletePlaintext();
+  }
+
+  Future<void> _deletePlaintext() async {
     try {
       final deleted = await _store.delete(plaintextStorageKey);
       if (!deleted) {
@@ -95,7 +128,6 @@ class EncryptedStudentRepository implements StudentRepository {
         error,
       );
     }
-    return verified;
   }
 
   String? _read(String key) {

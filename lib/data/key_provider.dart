@@ -26,7 +26,7 @@ class SecureStorageKeyProvider implements KeyProvider {
             iOptions: IOSOptions(
               accessibility: KeychainAccessibility.first_unlock_this_device,
             ),
-            aOptions: AndroidOptions(encryptedSharedPreferences: true),
+            aOptions: AndroidOptions(),
           );
 
   static const storageKey = 'student_data_encryption_key_v1';
