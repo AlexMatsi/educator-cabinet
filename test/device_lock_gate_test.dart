@@ -212,11 +212,6 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    addTearDown(
-      () => tester.binding.handleAppLifecycleStateChanged(
-        AppLifecycleState.resumed,
-      ),
-    );
     final auth = FakeDeviceAuthenticator()
       ..answer(DeviceAuthenticationStatus.success);
     await tester.pumpWidget(
@@ -233,7 +228,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Марія Весняна'), findsOneWidget);
 
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester
+        .state<DeviceLockGateState>(find.byType(DeviceLockGate))
+        .didChangeAppLifecycleState(AppLifecycleState.paused);
     await tester.pump();
     expect(find.byKey(const Key('privacy-overlay')), findsOneWidget);
     expect(find.text('Марія Весняна'), findsNothing);
