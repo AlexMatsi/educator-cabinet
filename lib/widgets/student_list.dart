@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../data/demo_repository.dart';
+import '../data/student_repository.dart';
 import '../models/student.dart';
 
 class StudentList extends StatelessWidget {
   const StudentList({
-    required this.repository,
+    required this.data,
     required this.selectedClassId,
     required this.query,
     required this.onClassChanged,
@@ -15,7 +15,7 @@ class StudentList extends StatelessWidget {
     this.selectedStudentId,
     super.key,
   });
-  final DemoRepository repository;
+  final StudentData data;
   final String? selectedClassId;
   final String query;
   final String? selectedStudentId;
@@ -26,7 +26,7 @@ class StudentList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final students = repository.findStudents(
+    final students = data.findStudents(
       classId: selectedClassId,
       query: query,
     );
@@ -49,7 +49,7 @@ class StudentList extends StatelessWidget {
                     value: 'all',
                     child: Text('Усі мої класи'),
                   ),
-                  ...DemoRepository.classes.map(
+                  ...data.classes.map(
                     (item) => DropdownMenuItem(
                       value: item.id,
                       child: Text(item.name),
@@ -89,7 +89,7 @@ class StudentList extends StatelessWidget {
                       ),
                       title: Text(student.fullName),
                       subtitle: Text(
-                        '${repository.className(student.classId)} • Кімната ${student.room}\n${student.sport}',
+                        '${data.className(student.classId)} • Кімната ${student.room}\n${student.sport}',
                       ),
                       isThreeLine: true,
                       onTap: () => onStudentTap(student),
