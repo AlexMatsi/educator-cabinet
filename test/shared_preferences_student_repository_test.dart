@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:educator_cabinet/data/demo_repository.dart';
 import 'package:educator_cabinet/data/shared_preferences_student_repository.dart';
 import 'package:educator_cabinet/data/student_data_codec.dart';
@@ -196,4 +198,3 @@ void main() {
     expect(attempts, 2);
   });
 }
-import 'dart:convert';
