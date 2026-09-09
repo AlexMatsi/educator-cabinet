@@ -24,6 +24,8 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Face ID використовується для захисту локальних даних кабінету вихователя.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
