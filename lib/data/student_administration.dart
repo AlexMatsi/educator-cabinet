@@ -52,7 +52,11 @@ class StudentAdministration {
     );
   }
 
-  Future<StudentData> renameClass(StudentData current, String id, String name) async {
+  Future<StudentData> renameClass(
+    StudentData current,
+    String id,
+    String name,
+  ) async {
     _class(current, id);
     final clean = _required(name, 'Введіть назву класу.');
     return _save(
