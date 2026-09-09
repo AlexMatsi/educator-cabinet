@@ -1,6 +1,9 @@
 import 'package:educator_cabinet/app.dart';
+import 'package:educator_cabinet/data/demo_repository.dart';
+import 'package:educator_cabinet/data/student_repository.dart';
 import 'package:educator_cabinet/models/contact.dart';
 import 'package:educator_cabinet/models/student.dart';
+import 'package:educator_cabinet/models/student_data.dart';
 import 'package:educator_cabinet/services/contact_action.dart';
 import 'package:educator_cabinet/widgets/student_detail.dart';
 import 'package:flutter/material.dart';
@@ -15,13 +18,57 @@ class RecordingContactAction implements ContactAction {
   }
 }
 
+class MemoryStudentRepository implements StudentRepository {
+  @override
+  Future<StudentData> load() async => DemoRepository.data;
+
+  @override
+  Future<void> save(StudentData data) async {}
+}
+
+class RetryingStudentRepository implements StudentRepository {
+  int loads = 0;
+
+  @override
+  Future<StudentData> load() async {
+    if (loads++ == 0) throw StateError('temporary read failure');
+    return DemoRepository.data;
+  }
+
+  @override
+  Future<void> save(StudentData data) async {}
+}
+
+EducatorCabinetApp testApp(ContactAction action) => EducatorCabinetApp(
+  contactAction: action,
+  studentRepository: MemoryStudentRepository(),
+);
+
 void main() {
+  testWidgets('load error is shown and retry loads students', (tester) async {
+    final repository = RetryingStudentRepository();
+    await tester.pumpWidget(
+      EducatorCabinetApp(
+        contactAction: RecordingContactAction(),
+        studentRepository: repository,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Не вдалося завантажити'), findsOneWidget);
+    expect(find.text('Спробувати ще раз'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('retry-student-load')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Марія Весняна'), findsOneWidget);
+    expect(repository.loads, 2);
+  });
+
   testWidgets('class choice, search and card open the correct student', (
     tester,
   ) async {
-    await tester.pumpWidget(
-      EducatorCabinetApp(contactAction: RecordingContactAction()),
-    );
+    await tester.pumpWidget(testApp(RecordingContactAction()));
+    await tester.pumpAndSettle();
     expect(find.text('Усі мої класи'), findsOneWidget);
     expect(find.text('Марія Весняна'), findsOneWidget);
     await tester.scrollUntilVisible(
@@ -98,9 +145,8 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     tester.platformDispatcher.textScaleFactorTestValue = 2;
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-    await tester.pumpWidget(
-      EducatorCabinetApp(contactAction: RecordingContactAction()),
-    );
+    await tester.pumpWidget(testApp(RecordingContactAction()));
+    await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     await tester.tap(find.text('Марія Весняна'));
     await tester.pumpAndSettle();
@@ -110,9 +156,8 @@ void main() {
   });
 
   testWidgets('class selector returns to all classes', (tester) async {
-    await tester.pumpWidget(
-      EducatorCabinetApp(contactAction: RecordingContactAction()),
-    );
+    await tester.pumpWidget(testApp(RecordingContactAction()));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('class-selector')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('9-В').last);
