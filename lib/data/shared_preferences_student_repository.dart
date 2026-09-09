@@ -19,6 +19,8 @@ abstract interface class StudentLocalStore {
   String? read(String key);
 
   Future<bool> write(String key, String value);
+
+  Future<bool> delete(String key);
 }
 
 class SharedPreferencesLocalStore implements StudentLocalStore {
@@ -32,6 +34,9 @@ class SharedPreferencesLocalStore implements StudentLocalStore {
   @override
   Future<bool> write(String key, String value) =>
       preferences.setString(key, value);
+
+  @override
+  Future<bool> delete(String key) => preferences.remove(key);
 }
 
 class SharedPreferencesStudentRepository implements StudentRepository {
