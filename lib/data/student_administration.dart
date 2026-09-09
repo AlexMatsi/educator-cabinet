@@ -52,7 +52,7 @@ class StudentAdministration {
     );
   }
 
-  Future<StudentData> renameClass(StudentData current, String id, String name) {
+  Future<StudentData> renameClass(StudentData current, String id, String name) async {
     _class(current, id);
     final clean = _required(name, 'Введіть назву класу.');
     return _save(
@@ -65,7 +65,7 @@ class StudentAdministration {
     );
   }
 
-  Future<StudentData> archiveClass(StudentData current, String id) {
+  Future<StudentData> archiveClass(StudentData current, String id) async {
     final target = _class(current, id);
     if (target.isArchived) {
       throw const StudentValidationException('Клас уже в архіві.');
@@ -90,7 +90,7 @@ class StudentAdministration {
     );
   }
 
-  Future<StudentData> restoreClass(StudentData current, String id) {
+  Future<StudentData> restoreClass(StudentData current, String id) async {
     final target = _class(current, id);
     if (!target.isArchived) {
       throw const StudentValidationException('Клас уже активний.');
@@ -162,7 +162,7 @@ class StudentAdministration {
     );
   }
 
-  Future<StudentData> archiveStudent(StudentData current, String id) {
+  Future<StudentData> archiveStudent(StudentData current, String id) async {
     final target = _student(current, id);
     if (target.isArchived) {
       throw const StudentValidationException('Учень уже в архіві.');
@@ -180,7 +180,7 @@ class StudentAdministration {
     );
   }
 
-  Future<StudentData> restoreStudent(StudentData current, String id) {
+  Future<StudentData> restoreStudent(StudentData current, String id) async {
     final student = _student(current, id);
     if (!student.isArchived) {
       throw const StudentValidationException('Учень уже активний.');

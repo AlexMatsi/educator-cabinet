@@ -19,11 +19,13 @@ class RecordingContactAction implements ContactAction {
 }
 
 class MemoryStudentRepository implements StudentRepository {
-  @override
-  Future<StudentData> load() async => DemoRepository.data;
+  StudentData value = DemoRepository.data;
 
   @override
-  Future<void> save(StudentData data) async {}
+  Future<StudentData> load() async => value;
+
+  @override
+  Future<void> save(StudentData data) async => value = data;
 }
 
 class RetryingStudentRepository implements StudentRepository {
@@ -180,7 +182,13 @@ void main() {
     tester.platformDispatcher.textScaleFactorTestValue = 2;
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
 
-    await tester.pumpWidget(testApp(RecordingContactAction()));
+    final repository = MemoryStudentRepository();
+    await tester.pumpWidget(
+      EducatorCabinetApp(
+        contactAction: RecordingContactAction(),
+        studentRepository: repository,
+      ),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('add-student')));
     await tester.pumpAndSettle();
@@ -195,7 +203,13 @@ void main() {
     await tester.tap(find.byKey(const Key('save-student')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Тестова Учениця'), findsOneWidget);
+    expect(
+      repository.value.students.any(
+        (student) => student.fullName == 'Тестова Учениця',
+      ),
+      isTrue,
+    );
+    expect(find.text('Новий учень'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }
