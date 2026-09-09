@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../data/demo_repository.dart';
 import '../models/student.dart';
+import '../models/student_data.dart';
 
 class StudentList extends StatelessWidget {
   const StudentList({
-    required this.repository,
+    required this.data,
     required this.selectedClassId,
     required this.query,
     required this.onClassChanged,
@@ -15,7 +15,7 @@ class StudentList extends StatelessWidget {
     this.selectedStudentId,
     super.key,
   });
-  final DemoRepository repository;
+  final StudentData data;
   final String? selectedClassId;
   final String query;
   final String? selectedStudentId;
@@ -26,10 +26,14 @@ class StudentList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final students = repository.findStudents(
-      classId: selectedClassId,
-      query: query,
-    );
+    final normalized = query.trim().toLowerCase();
+    final students = data.students.where((student) {
+      return (selectedClassId == null || student.classId == selectedClassId) &&
+          (normalized.isEmpty ||
+              student.fullName.toLowerCase().contains(normalized));
+    }).toList(growable: false);
+    String className(String id) =>
+        data.classes.firstWhere((item) => item.id == id).name;
     return Column(
       children: [
         Padding(
@@ -49,7 +53,7 @@ class StudentList extends StatelessWidget {
                     value: 'all',
                     child: Text('Усі мої класи'),
                   ),
-                  ...DemoRepository.classes.map(
+                  ...data.classes.map(
                     (item) => DropdownMenuItem(
                       value: item.id,
                       child: Text(item.name),
@@ -89,7 +93,7 @@ class StudentList extends StatelessWidget {
                       ),
                       title: Text(student.fullName),
                       subtitle: Text(
-                        '${repository.className(student.classId)} • Кімната ${student.room}\n${student.sport}',
+                        '${className(student.classId)} • Кімната ${student.room}\n${student.sport}',
                       ),
                       isThreeLine: true,
                       onTap: () => onStudentTap(student),

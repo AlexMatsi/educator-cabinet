@@ -1,6 +1,7 @@
 import '../models/contact.dart';
 import '../models/student.dart';
 import '../models/student_class.dart';
+import '../models/student_data.dart';
 
 class DemoRepository {
   const DemoRepository();
@@ -93,6 +94,8 @@ class DemoRepository {
       ],
     ),
   ];
+
+  static const data = StudentData(classes: classes, students: students);
 
   List<Student> findStudents({String? classId, String query = ''}) {
     final normalized = query.trim().toLowerCase();
