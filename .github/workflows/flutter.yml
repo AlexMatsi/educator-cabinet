@@ -38,3 +38,20 @@ jobs:
 
       - name: Зібрати web
         run: flutter build web
+
+      - name: Підготувати виправлення формату та lock-файла
+        if: failure()
+        run: |
+          dart format lib test
+          python3 - <<'PY'
+          import json, pathlib, subprocess
+          paths = subprocess.check_output(
+              ['git', 'diff', '--name-only', '--', 'lib', 'test', 'pubspec.lock'],
+              text=True,
+          ).splitlines()
+          for path in paths:
+              print('REPAIR_FILE_JSON=' + json.dumps({
+                  'path': path,
+                  'content': pathlib.Path(path).read_text(),
+              }))
+          PY
