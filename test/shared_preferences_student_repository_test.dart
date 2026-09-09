@@ -22,6 +22,12 @@ class FakeStore implements StudentLocalStore {
   int writes = 0;
 
   @override
+  Future<bool> delete(String key) async {
+    value = null;
+    return true;
+  }
+
+  @override
   String? read(String key) {
     if (readError case final error?) throw error;
     return value;
