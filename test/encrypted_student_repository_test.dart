@@ -33,7 +33,8 @@ class MemoryStore implements StudentLocalStore {
 }
 
 class FakeKeyProvider implements KeyProvider {
-  FakeKeyProvider({List<int>? key, this.readError, this.createError}) : _key = key;
+  FakeKeyProvider({List<int>? key, this.readError, this.createError})
+    : _key = key;
 
   List<int>? _key;
   Object? readError;
@@ -42,7 +43,8 @@ class FakeKeyProvider implements KeyProvider {
 
   @override
   Future<List<int>?> read() async {
-    if (readError case final error?) throw KeyProviderException('secure read', error);
+    if (readError case final error?)
+      throw KeyProviderException('secure read', error);
     return _key;
   }
 
@@ -74,47 +76,60 @@ void main() {
     expect(await cipher.decrypt(first, key), 'small json');
   });
 
-  test('tampering fails authentication and unknown envelopes are rejected', () async {
-    final cipher = AesGcmPayloadCipher();
-    final encrypted = jsonDecode(await cipher.encrypt('payload', key)) as Map;
-    encrypted['mac'] = base64Encode(List<int>.filled(16, 0));
-    await expectLater(
-      cipher.decrypt(jsonEncode(encrypted), key),
-      throwsA(
-        isA<EncryptedPayloadException>().having(
-          (error) => error.kind,
-          'kind',
-          EncryptedPayloadError.authentication,
+  test(
+    'tampering fails authentication and unknown envelopes are rejected',
+    () async {
+      final cipher = AesGcmPayloadCipher();
+      final encrypted = jsonDecode(await cipher.encrypt('payload', key)) as Map;
+      encrypted['mac'] = base64Encode(List<int>.filled(16, 0));
+      await expectLater(
+        cipher.decrypt(jsonEncode(encrypted), key),
+        throwsA(
+          isA<EncryptedPayloadException>().having(
+            (error) => error.kind,
+            'kind',
+            EncryptedPayloadError.authentication,
+          ),
         ),
-      ),
-    );
-    await expectLater(
-      cipher.decrypt('{"version":99}', key),
-      throwsA(
-        isA<EncryptedPayloadException>().having(
-          (error) => error.kind,
-          'kind',
-          EncryptedPayloadError.unknownEnvelope,
+      );
+      await expectLater(
+        cipher.decrypt('{"version":99}', key),
+        throwsA(
+          isA<EncryptedPayloadException>().having(
+            (error) => error.kind,
+            'kind',
+            EncryptedPayloadError.unknownEnvelope,
+          ),
         ),
-      ),
-    );
-    await expectLater(
-      cipher.decrypt('{broken', key),
-      throwsA(isA<EncryptedPayloadException>()),
-    );
-  });
+      );
+      await expectLater(
+        cipher.decrypt('{broken', key),
+        throwsA(isA<EncryptedPayloadException>()),
+      );
+    },
+  );
 
   test('save and reopen preserve encrypted student data', () async {
     final store = MemoryStore();
     final keys = FakeKeyProvider(key: key);
-    final repository = EncryptedStudentRepository(store: store, keyProvider: keys);
+    final repository = EncryptedStudentRepository(
+      store: store,
+      keyProvider: keys,
+    );
 
     await repository.save(DemoRepository.data);
-    final envelope = store.values[EncryptedStudentRepository.encryptedStorageKey]!;
+    final envelope =
+        store.values[EncryptedStudentRepository.encryptedStorageKey]!;
     expect(envelope, isNot(contains('Марія Весняна')));
 
-    final reopened = EncryptedStudentRepository(store: store, keyProvider: keys);
-    expect(codec.encode(await reopened.load()), codec.encode(DemoRepository.data));
+    final reopened = EncryptedStudentRepository(
+      store: store,
+      keyProvider: keys,
+    );
+    expect(
+      codec.encode(await reopened.load()),
+      codec.encode(DemoRepository.data),
+    );
   });
 
   test('missing key does not seed over an encrypted document', () async {
@@ -124,7 +139,8 @@ void main() {
       keyProvider: FakeKeyProvider(key: key),
     );
     await first.save(DemoRepository.data);
-    final original = store.values[EncryptedStudentRepository.encryptedStorageKey];
+    final original =
+        store.values[EncryptedStudentRepository.encryptedStorageKey];
 
     final lost = EncryptedStudentRepository(
       store: store,
@@ -140,41 +156,63 @@ void main() {
         ),
       ),
     );
-    expect(store.values[EncryptedStudentRepository.encryptedStorageKey], original);
-  });
-
-  test('plaintext v2 migration verifies encrypted data before deleting it', () async {
-    final plaintext = codec.encode(DemoRepository.data);
-    final store = MemoryStore({
-      EncryptedStudentRepository.plaintextStorageKey: plaintext,
-    });
-    final repository = EncryptedStudentRepository(
-      store: store,
-      keyProvider: FakeKeyProvider(),
+    expect(
+      store.values[EncryptedStudentRepository.encryptedStorageKey],
+      original,
     );
-
-    expect(codec.encode(await repository.load()), plaintext);
-    expect(store.values, isNot(contains(EncryptedStudentRepository.plaintextStorageKey)));
-    expect(store.values[EncryptedStudentRepository.encryptedStorageKey], isNotNull);
   });
 
-  test('migration keeps plaintext when encrypted write or deletion fails', () async {
-    final plaintext = codec.encode(DemoRepository.data);
-    for (final failure in ['write', 'delete']) {
+  test(
+    'plaintext v2 migration verifies encrypted data before deleting it',
+    () async {
+      final plaintext = codec.encode(DemoRepository.data);
       final store = MemoryStore({
         EncryptedStudentRepository.plaintextStorageKey: plaintext,
-      })
-        ..failWrite = failure == 'write'
-        ..failDelete = failure == 'delete';
+      });
       final repository = EncryptedStudentRepository(
         store: store,
         keyProvider: FakeKeyProvider(),
       );
 
-      await expectLater(repository.load(), throwsA(isA<StudentStorageException>()));
-      expect(store.values[EncryptedStudentRepository.plaintextStorageKey], plaintext);
-    }
-  });
+      expect(codec.encode(await repository.load()), plaintext);
+      expect(
+        store.values,
+        isNot(contains(EncryptedStudentRepository.plaintextStorageKey)),
+      );
+      expect(
+        store.values[EncryptedStudentRepository.encryptedStorageKey],
+        isNotNull,
+      );
+    },
+  );
+
+  test(
+    'migration keeps plaintext when encrypted write or deletion fails',
+    () async {
+      final plaintext = codec.encode(DemoRepository.data);
+      for (final failure in ['write', 'delete']) {
+        final store =
+            MemoryStore({
+                EncryptedStudentRepository.plaintextStorageKey: plaintext,
+              })
+              ..failWrite = failure == 'write'
+              ..failDelete = failure == 'delete';
+        final repository = EncryptedStudentRepository(
+          store: store,
+          keyProvider: FakeKeyProvider(),
+        );
+
+        await expectLater(
+          repository.load(),
+          throwsA(isA<StudentStorageException>()),
+        );
+        expect(
+          store.values[EncryptedStudentRepository.plaintextStorageKey],
+          plaintext,
+        );
+      }
+    },
+  );
 
   test('pending plaintext cleanup resumes safely on next load', () async {
     final plaintext = codec.encode(DemoRepository.data);
@@ -187,11 +225,20 @@ void main() {
       EncryptedStudentRepository(store: store, keyProvider: keys).load(),
       throwsA(isA<StudentStorageException>()),
     );
-    expect(store.values[EncryptedStudentRepository.plaintextStorageKey], plaintext);
-    expect(store.values[EncryptedStudentRepository.encryptedStorageKey], isNotNull);
+    expect(
+      store.values[EncryptedStudentRepository.plaintextStorageKey],
+      plaintext,
+    );
+    expect(
+      store.values[EncryptedStudentRepository.encryptedStorageKey],
+      isNotNull,
+    );
 
     store.failDelete = false;
-    final reopened = EncryptedStudentRepository(store: store, keyProvider: keys);
+    final reopened = EncryptedStudentRepository(
+      store: store,
+      keyProvider: keys,
+    );
     expect(codec.encode(await reopened.load()), plaintext);
     expect(
       store.values,
@@ -202,12 +249,19 @@ void main() {
   test('conflicting plaintext is never deleted', () async {
     final store = MemoryStore();
     final keys = FakeKeyProvider(key: key);
-    final repository = EncryptedStudentRepository(store: store, keyProvider: keys);
+    final repository = EncryptedStudentRepository(
+      store: store,
+      keyProvider: keys,
+    );
     await repository.save(DemoRepository.data);
-    store.values[EncryptedStudentRepository.plaintextStorageKey] =
-        codec.encode(const StudentData(classes: [], students: []));
+    store.values[EncryptedStudentRepository.plaintextStorageKey] = codec.encode(
+      const StudentData(classes: [], students: []),
+    );
 
-    await expectLater(repository.load(), throwsA(isA<StudentStorageException>()));
+    await expectLater(
+      repository.load(),
+      throwsA(isA<StudentStorageException>()),
+    );
     expect(
       store.values[EncryptedStudentRepository.plaintextStorageKey],
       isNotNull,
@@ -219,34 +273,44 @@ void main() {
     final keys = FakeKeyProvider();
     final first = EncryptedStudentRepository(store: store, keyProvider: keys);
     expect(codec.encode(await first.load()), codec.encode(DemoRepository.data));
-    final envelope = store.values[EncryptedStudentRepository.encryptedStorageKey];
+    final envelope =
+        store.values[EncryptedStudentRepository.encryptedStorageKey];
 
     final second = EncryptedStudentRepository(store: store, keyProvider: keys);
-    expect(codec.encode(await second.load()), codec.encode(DemoRepository.data));
-    expect(store.values[EncryptedStudentRepository.encryptedStorageKey], envelope);
+    expect(
+      codec.encode(await second.load()),
+      codec.encode(DemoRepository.data),
+    );
+    expect(
+      store.values[EncryptedStudentRepository.encryptedStorageKey],
+      envelope,
+    );
     expect(keys.creates, 1);
   });
 
-  test('corrupt encrypted data and secure-storage failures are controlled', () async {
-    final corruptStore = MemoryStore({
-      EncryptedStudentRepository.encryptedStorageKey: '{broken',
-    });
-    await expectLater(
-      EncryptedStudentRepository(
-        store: corruptStore,
-        keyProvider: FakeKeyProvider(key: key),
-      ).load(),
-      throwsA(isA<StudentStorageException>()),
-    );
+  test(
+    'corrupt encrypted data and secure-storage failures are controlled',
+    () async {
+      final corruptStore = MemoryStore({
+        EncryptedStudentRepository.encryptedStorageKey: '{broken',
+      });
+      await expectLater(
+        EncryptedStudentRepository(
+          store: corruptStore,
+          keyProvider: FakeKeyProvider(key: key),
+        ).load(),
+        throwsA(isA<StudentStorageException>()),
+      );
 
-    final emptyStore = MemoryStore();
-    await expectLater(
-      EncryptedStudentRepository(
-        store: emptyStore,
-        keyProvider: FakeKeyProvider(createError: StateError('denied')),
-      ).load(),
-      throwsA(isA<StudentStorageException>()),
-    );
-    expect(emptyStore.values, isEmpty);
-  });
+      final emptyStore = MemoryStore();
+      await expectLater(
+        EncryptedStudentRepository(
+          store: emptyStore,
+          keyProvider: FakeKeyProvider(createError: StateError('denied')),
+        ).load(),
+        throwsA(isA<StudentStorageException>()),
+      );
+      expect(emptyStore.values, isEmpty);
+    },
+  );
 }

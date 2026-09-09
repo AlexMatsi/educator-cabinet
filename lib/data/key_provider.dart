@@ -21,7 +21,8 @@ abstract interface class KeyProvider {
 
 class SecureStorageKeyProvider implements KeyProvider {
   SecureStorageKeyProvider({FlutterSecureStorage? storage})
-    : _storage = storage ??
+    : _storage =
+          storage ??
           const FlutterSecureStorage(
             iOptions: IOSOptions(
               accessibility: KeychainAccessibility.first_unlock_this_device,
