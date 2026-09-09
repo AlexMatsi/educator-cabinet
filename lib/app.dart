@@ -100,14 +100,10 @@ class _StudentsScreenState extends State<StudentsScreen> {
             student: student,
             className: className(student.classId),
             contactAction: widget.contactAction,
-            onEdit: () => _editStudent(
-              student: student,
-              closeDetailsOnSuccess: true,
-            ),
-            onArchive: () => _confirmArchiveStudent(
-              student,
-              closeDetailsOnSuccess: true,
-            ),
+            onEdit: () =>
+                _editStudent(student: student, closeDetailsOnSuccess: true),
+            onArchive: () =>
+                _confirmArchiveStudent(student, closeDetailsOnSuccess: true),
           ),
         ),
       );
@@ -131,9 +127,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
         selected = selectedId == null
             ? null
             : saved.students
-                  .where(
-                    (item) => item.id == selectedId && !item.isArchived,
-                  )
+                  .where((item) => item.id == selectedId && !item.isArchived)
                   .firstOrNull;
       });
       return true;

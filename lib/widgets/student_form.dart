@@ -111,10 +111,8 @@ class _StudentFormState extends State<StudentForm> {
             ),
             items: widget.classes
                 .map(
-                  (item) => DropdownMenuItem(
-                    value: item.id,
-                    child: Text(item.name),
-                  ),
+                  (item) =>
+                      DropdownMenuItem(value: item.id, child: Text(item.name)),
                 )
                 .toList(growable: false),
             onChanged: (value) {

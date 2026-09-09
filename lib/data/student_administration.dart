@@ -52,11 +52,7 @@ class StudentAdministration {
     );
   }
 
-  Future<StudentData> renameClass(
-    StudentData current,
-    String id,
-    String name,
-  ) {
+  Future<StudentData> renameClass(StudentData current, String id, String name) {
     _class(current, id);
     final clean = _required(name, 'Введіть назву класу.');
     return _save(
@@ -102,9 +98,7 @@ class StudentAdministration {
     return _save(
       StudentData(
         classes: current.classes
-            .map(
-              (item) => item.id == id ? item.copyWith(restore: true) : item,
-            )
+            .map((item) => item.id == id ? item.copyWith(restore: true) : item)
             .toList(growable: false),
         students: current.students,
       ),
@@ -196,9 +190,7 @@ class StudentAdministration {
       StudentData(
         classes: current.classes,
         students: current.students
-            .map(
-              (item) => item.id == id ? item.copyWith(restore: true) : item,
-            )
+            .map((item) => item.id == id ? item.copyWith(restore: true) : item)
             .toList(growable: false),
       ),
     );
@@ -249,20 +241,22 @@ class StudentAdministration {
 
   List<Contact> _validatedContacts(List<Contact> contacts) {
     final ids = <String>{};
-    return contacts.map((contact) {
-      final id = _required(contact.id, 'Контакт має некоректний ID.');
-      if (!ids.add(id)) {
-        throw const StudentValidationException(
-          'Контакти мають повторювані ID.',
-        );
-      }
-      return Contact(
-        id: id,
-        name: _required(contact.name, "Введіть ім'я контакту."),
-        role: _required(contact.role, 'Введіть роль контакту.'),
-        phone: _optional(contact.phone),
-      );
-    }).toList(growable: false);
+    return contacts
+        .map((contact) {
+          final id = _required(contact.id, 'Контакт має некоректний ID.');
+          if (!ids.add(id)) {
+            throw const StudentValidationException(
+              'Контакти мають повторювані ID.',
+            );
+          }
+          return Contact(
+            id: id,
+            name: _required(contact.name, "Введіть ім'я контакту."),
+            role: _required(contact.role, 'Введіть роль контакту.'),
+            phone: _optional(contact.phone),
+          );
+        })
+        .toList(growable: false);
   }
 
   String _required(String value, String message) {
