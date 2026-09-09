@@ -1,6 +1,11 @@
+import 'dart:async';
+
 import 'package:educator_cabinet/app.dart';
+import 'package:educator_cabinet/data/demo_repository.dart';
+import 'package:educator_cabinet/data/student_repository.dart';
 import 'package:educator_cabinet/models/contact.dart';
 import 'package:educator_cabinet/models/student.dart';
+import 'package:educator_cabinet/models/student_directory.dart';
 import 'package:educator_cabinet/services/contact_action.dart';
 import 'package:educator_cabinet/widgets/student_detail.dart';
 import 'package:flutter/material.dart';
@@ -15,13 +20,41 @@ class RecordingContactAction implements ContactAction {
   }
 }
 
+class TestStudentRepository implements StudentRepository {
+  TestStudentRepository({this.error, this.loader});
+
+  final Object? error;
+  final Future<StudentDirectory> Function()? loader;
+
+  @override
+  Future<StudentDirectory> load() async {
+    if (error != null) throw error!;
+    if (loader != null) return loader!();
+    return DemoRepository.directory;
+  }
+
+  @override
+  Future<void> replaceAll(StudentDirectory directory) async {}
+}
+
+Future<void> pumpApp(
+  WidgetTester tester, {
+  StudentRepository? repository,
+}) async {
+  await tester.pumpWidget(
+    EducatorCabinetApp(
+      contactAction: RecordingContactAction(),
+      repository: repository ?? TestStudentRepository(),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets('class choice, search and card open the correct student', (
     tester,
   ) async {
-    await tester.pumpWidget(
-      EducatorCabinetApp(contactAction: RecordingContactAction()),
-    );
+    await pumpApp(tester);
     expect(find.text('Усі мої класи'), findsOneWidget);
     expect(find.text('Марія Весняна'), findsOneWidget);
     await tester.scrollUntilVisible(
@@ -98,9 +131,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     tester.platformDispatcher.textScaleFactorTestValue = 2;
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-    await tester.pumpWidget(
-      EducatorCabinetApp(contactAction: RecordingContactAction()),
-    );
+    await pumpApp(tester);
     expect(tester.takeException(), isNull);
     await tester.tap(find.text('Марія Весняна'));
     await tester.pumpAndSettle();
@@ -110,9 +141,7 @@ void main() {
   });
 
   testWidgets('class selector returns to all classes', (tester) async {
-    await tester.pumpWidget(
-      EducatorCabinetApp(contactAction: RecordingContactAction()),
-    );
+    await pumpApp(tester);
     await tester.tap(find.byKey(const Key('class-selector')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('9-В').last);
@@ -123,5 +152,31 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Марія Весняна'), findsOneWidget);
     expect(find.text('Усі мої класи'), findsOneWidget);
+  });
+
+  testWidgets('shows a Ukrainian storage error and retry action', (
+    tester,
+  ) async {
+    await pumpApp(tester, repository: TestStudentRepository(error: Exception()));
+    expect(find.textContaining('Не вдалося завантажити'), findsOneWidget);
+    expect(find.text('Спробувати ще раз'), findsOneWidget);
+    expect(find.text('Марія Весняна'), findsNothing);
+  });
+
+  testWidgets('shows a Ukrainian loading state while storage is opening', (
+    tester,
+  ) async {
+    final loading = Completer<StudentDirectory>();
+    await tester.pumpWidget(
+      EducatorCabinetApp(
+        contactAction: RecordingContactAction(),
+        repository: TestStudentRepository(loader: () => loading.future),
+      ),
+    );
+
+    expect(find.text('Завантажуємо локальні дані…'), findsOneWidget);
+    loading.complete(DemoRepository.directory);
+    await tester.pumpAndSettle();
+    expect(find.text('Марія Весняна'), findsOneWidget);
   });
 }
