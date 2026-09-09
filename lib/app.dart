@@ -12,7 +12,7 @@ import 'widgets/student_form.dart';
 import 'widgets/student_list.dart';
 import 'widgets/device_lock_gate.dart';
 
-class EducatorCabinetApp extends StatelessWidget {
+class EducatorCabinetApp extends StatefulWidget {
   const EducatorCabinetApp({
     required this.contactAction,
     required this.studentRepository,
@@ -26,9 +26,16 @@ class EducatorCabinetApp extends StatelessWidget {
   final bool requireDeviceAuthentication;
 
   @override
+  State<EducatorCabinetApp> createState() => _EducatorCabinetAppState();
+}
+
+class _EducatorCabinetAppState extends State<EducatorCabinetApp> {
+  final _lockGateKey = GlobalKey<DeviceLockGateState>();
+
+  @override
   Widget build(BuildContext context) {
     assert(
-      !requireDeviceAuthentication || deviceAuthenticator != null,
+      !widget.requireDeviceAuthentication || widget.deviceAuthenticator != null,
       'A device authenticator is required for the mobile lock.',
     );
     return MaterialApp(
@@ -48,19 +55,20 @@ class EducatorCabinetApp extends StatelessWidget {
         brightness: Brightness.dark,
         useMaterial3: true,
       ),
-      home: requireDeviceAuthentication
-          ? DeviceLockGate(
-              authenticator: deviceAuthenticator!,
-              childBuilder: (lock) => StudentsScreen(
-                contactAction: contactAction,
-                studentRepository: studentRepository,
-                onLock: lock,
-              ),
+      builder: widget.requireDeviceAuthentication
+          ? (context, child) => DeviceLockGate(
+              key: _lockGateKey,
+              authenticator: widget.deviceAuthenticator!,
+              childBuilder: (_) => child ?? const SizedBox.shrink(),
             )
-          : StudentsScreen(
-              contactAction: contactAction,
-              studentRepository: studentRepository,
-            ),
+          : null,
+      home: StudentsScreen(
+        contactAction: widget.contactAction,
+        studentRepository: widget.studentRepository,
+        onLock: widget.requireDeviceAuthentication
+            ? () => _lockGateKey.currentState?.lock()
+            : null,
+      ),
     );
   }
 }

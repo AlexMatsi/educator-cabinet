@@ -207,6 +207,38 @@ void main() {
     expect(find.byKey(const Key('device-lock-screen')), findsOneWidget);
   });
 
+  testWidgets('privacy overlay covers a pushed student route', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(
+      () => tester.binding.handleAppLifecycleStateChanged(
+        AppLifecycleState.resumed,
+      ),
+    );
+    final auth = FakeDeviceAuthenticator()
+      ..answer(DeviceAuthenticationStatus.success);
+    await tester.pumpWidget(
+      EducatorCabinetApp(
+        contactAction: NoopContactAction(),
+        studentRepository: CountingRepository(),
+        requireDeviceAuthentication: true,
+        deviceAuthenticator: auth,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Марія Весняна'));
+    await tester.pumpAndSettle();
+    expect(find.text('Марія Весняна'), findsOneWidget);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await tester.pump();
+    expect(find.byKey(const Key('privacy-overlay')), findsOneWidget);
+    expect(find.text('Марія Весняна'), findsNothing);
+  });
+
   testWidgets('lock screen fits a 390x844 display at 200% text', (
     tester,
   ) async {
