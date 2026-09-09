@@ -17,6 +17,9 @@ jobs:
   build:
     name: Зібрати web-демо
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
     steps:
       - name: Отримати код
         uses: actions/checkout@v6
