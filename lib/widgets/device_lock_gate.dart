@@ -93,8 +93,9 @@ class DeviceLockGateState extends State<DeviceLockGate>
     if (!mounted) return;
     setState(() {
       _authenticating = false;
+      final lifecycleState = WidgetsBinding.instance.lifecycleState;
       _privacyHidden =
-          WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed;
+          lifecycleState != null && lifecycleState != AppLifecycleState.resumed;
       if (result.status == DeviceAuthenticationStatus.success) {
         _unlocked = true;
         _unlockedChild ??= widget.childBuilder(lock);
