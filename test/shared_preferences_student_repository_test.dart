@@ -49,7 +49,9 @@ void main() {
     );
     await first.save(edited);
     await preferences.reload();
-    final reopened = SharedPreferencesStudentRepository(preferences: preferences);
+    final reopened = SharedPreferencesStudentRepository(
+      preferences: preferences,
+    );
     expect(codec.encode(await reopened.load()), codec.encode(edited));
     await reopened.save(const StudentData.empty());
     await preferences.reload();

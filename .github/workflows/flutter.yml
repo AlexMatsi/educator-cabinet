@@ -25,7 +25,12 @@ jobs:
           cache: true
 
       - name: Отримати залежності
-        run: flutter pub get
+        run: |
+          flutter pub get
+          git diff --exit-code -- pubspec.lock
+          flutter pub get
+          git diff --exit-code -- pubspec.lock
+          git diff --check
 
       - name: Перевірити форматування
         run: dart format --output=none --set-exit-if-changed lib test
@@ -38,20 +43,3 @@ jobs:
 
       - name: Зібрати web
         run: flutter build web
-
-      - name: Підготувати виправлення формату та lock-файла
-        if: failure()
-        run: |
-          dart format lib test
-          python3 - <<'PY'
-          import json, pathlib, subprocess
-          paths = subprocess.check_output(
-              ['git', 'diff', '--name-only', '--', 'lib', 'test', 'pubspec.lock'],
-              text=True,
-          ).splitlines()
-          for path in paths:
-              print('REPAIR_FILE_JSON=' + json.dumps({
-                  'path': path,
-                  'content': pathlib.Path(path).read_text(),
-              }))
-          PY
