@@ -8,7 +8,8 @@ import 'services/device_authenticator.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final isMobile = !kIsWeb &&
+  final isMobile =
+      !kIsWeb &&
       (defaultTargetPlatform == TargetPlatform.iOS ||
           defaultTargetPlatform == TargetPlatform.android);
   final studentRepository = isMobile

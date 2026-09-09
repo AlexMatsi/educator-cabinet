@@ -24,15 +24,13 @@ Future<StudentRepository> createStudentRepository() async {
   return SharedPreferencesStudentRepository(preferences: preferences);
 }
 
-
 class LazyStudentRepository implements StudentRepository {
   LazyStudentRepository(this._create);
 
   final Future<StudentRepository> Function() _create;
   Future<StudentRepository>? _repository;
 
-  Future<StudentRepository> _getRepository() =>
-      _repository ??= _create();
+  Future<StudentRepository> _getRepository() => _repository ??= _create();
 
   @override
   Future<StudentData> load() async => (await _getRepository()).load();

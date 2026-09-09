@@ -60,7 +60,8 @@ class DeviceLockGateState extends State<DeviceLockGate>
 
     final backgroundedAt = _backgroundedAt;
     _backgroundedAt = null;
-    final timedOut = !_backgroundedForAuthentication &&
+    final timedOut =
+        !_backgroundedForAuthentication &&
         backgroundedAt != null &&
         widget.clock().difference(backgroundedAt) >= widget.relockAfter;
     _backgroundedForAuthentication = false;
@@ -98,7 +99,8 @@ class DeviceLockGateState extends State<DeviceLockGate>
         _unlocked = true;
         _unlockedChild ??= widget.childBuilder(lock);
       } else {
-        _message = result.message ??
+        _message =
+            result.message ??
             'Автентифікацію скасовано. Дані залишаються заблокованими.';
       }
     });
@@ -110,9 +112,7 @@ class DeviceLockGateState extends State<DeviceLockGate>
       return const ColoredBox(
         key: Key('privacy-overlay'),
         color: Color(0xff18211f),
-        child: Center(
-          child: Icon(Icons.lock, color: Colors.white, size: 48),
-        ),
+        child: Center(child: Icon(Icons.lock, color: Colors.white, size: 48)),
       );
     }
     if (_unlocked) return _unlockedChild!;

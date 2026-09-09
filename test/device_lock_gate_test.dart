@@ -147,7 +147,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    for (final state in [AppLifecycleState.inactive, AppLifecycleState.paused]) {
+    for (final state in [
+      AppLifecycleState.inactive,
+      AppLifecycleState.paused,
+    ]) {
       tester.binding.handleAppLifecycleStateChanged(state);
       await tester.pump();
       expect(find.byKey(const Key('privacy-overlay')), findsOneWidget);
