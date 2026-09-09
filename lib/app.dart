@@ -1,57 +1,80 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-import 'data/student_repository.dart';
 import 'data/student_administration.dart';
+import 'data/student_repository.dart';
 import 'models/student.dart';
 import 'models/student_data.dart';
 import 'services/contact_action.dart';
+import 'services/device_authenticator.dart';
 import 'widgets/student_detail.dart';
-import 'widgets/student_list.dart';
 import 'widgets/student_form.dart';
+import 'widgets/student_list.dart';
+import 'widgets/device_lock_gate.dart';
 
 class EducatorCabinetApp extends StatelessWidget {
   const EducatorCabinetApp({
     required this.contactAction,
     required this.studentRepository,
+    this.deviceAuthenticator,
+    this.requireDeviceAuthentication = false,
     super.key,
   });
   final ContactAction contactAction;
   final StudentRepository studentRepository;
+  final DeviceAuthenticator? deviceAuthenticator;
+  final bool requireDeviceAuthentication;
 
   @override
-  Widget build(BuildContext context) => MaterialApp(
-    title: 'Кабінет вихователя',
-    locale: const Locale('uk'),
-    supportedLocales: const [Locale('uk')],
-    localizationsDelegates: GlobalMaterialLocalizations.delegates,
-    debugShowCheckedModeBanner: false,
-    themeMode: ThemeMode.system,
-    theme: ThemeData(
-      colorSchemeSeed: const Color(0xff356859),
-      brightness: Brightness.light,
-      useMaterial3: true,
-    ),
-    darkTheme: ThemeData(
-      colorSchemeSeed: const Color(0xff79b8a4),
-      brightness: Brightness.dark,
-      useMaterial3: true,
-    ),
-    home: StudentsScreen(
-      contactAction: contactAction,
-      studentRepository: studentRepository,
-    ),
-  );
+  Widget build(BuildContext context) {
+    assert(
+      !requireDeviceAuthentication || deviceAuthenticator != null,
+      'A device authenticator is required for the mobile lock.',
+    );
+    return MaterialApp(
+      title: 'Кабінет вихователя',
+      locale: const Locale('uk'),
+      supportedLocales: const [Locale('uk')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      debugShowCheckedModeBanner: false,
+      themeMode: ThemeMode.system,
+      theme: ThemeData(
+        colorSchemeSeed: const Color(0xff356859),
+        brightness: Brightness.light,
+        useMaterial3: true,
+      ),
+      darkTheme: ThemeData(
+        colorSchemeSeed: const Color(0xff79b8a4),
+        brightness: Brightness.dark,
+        useMaterial3: true,
+      ),
+      home: requireDeviceAuthentication
+          ? DeviceLockGate(
+              authenticator: deviceAuthenticator!,
+              childBuilder: (lock) => StudentsScreen(
+                contactAction: contactAction,
+                studentRepository: studentRepository,
+                onLock: lock,
+              ),
+            )
+          : StudentsScreen(
+              contactAction: contactAction,
+              studentRepository: studentRepository,
+            ),
+    );
+  }
 }
 
 class StudentsScreen extends StatefulWidget {
   const StudentsScreen({
     required this.contactAction,
     required this.studentRepository,
+    this.onLock,
     super.key,
   });
   final ContactAction contactAction;
   final StudentRepository studentRepository;
+  final VoidCallback? onLock;
 
   @override
   State<StudentsScreen> createState() => _StudentsScreenState();
@@ -396,8 +419,15 @@ class _StudentsScreenState extends State<StudentsScreen> {
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
       title: const Text('Учні'),
-      actions: const [
-        Padding(
+      actions: [
+        if (widget.onLock != null)
+          IconButton(
+            key: const Key('manual-lock'),
+            tooltip: 'Заблокувати',
+            onPressed: widget.onLock,
+            icon: const Icon(Icons.lock_outline),
+          ),
+        const Padding(
           padding: EdgeInsets.symmetric(horizontal: 16),
           child: Center(
             child: Text('ДЕМО', style: TextStyle(fontWeight: FontWeight.bold)),
