@@ -7,20 +7,29 @@ import '../models/student_data.dart';
 class StudentDataCodec {
   const StudentDataCodec();
 
-  static const schemaVersion = 1;
+  static const schemaVersion = 2;
 
-  String encode(StudentData data) => jsonEncode({
-    'schemaVersion': schemaVersion,
-    'classes': data.classes.map((item) => item.toJson()).toList(),
-    'students': data.students.map((item) => item.toJson()).toList(),
-  });
+  bool requiresMigration(String source) {
+    final value = jsonDecode(source);
+    return value is Map<String, Object?> && value['schemaVersion'] == 1;
+  }
+
+  String encode(StudentData data) {
+    _validateIntegrity(data);
+    return jsonEncode({
+      'schemaVersion': schemaVersion,
+      'classes': data.classes.map((item) => item.toJson()).toList(),
+      'students': data.students.map((item) => item.toJson()).toList(),
+    });
+  }
 
   StudentData decode(String source) {
     final value = jsonDecode(source);
     if (value is! Map<String, Object?>) {
       throw const FormatException('The stored student data is not an object.');
     }
-    if (value['schemaVersion'] != schemaVersion) {
+    final version = value['schemaVersion'];
+    if (version != 1 && version != schemaVersion) {
       throw const FormatException('Unsupported student data schema.');
     }
     try {
@@ -48,12 +57,31 @@ class StudentDataCodec {
     if (studentIds.toSet().length != studentIds.length) {
       throw const FormatException('Student IDs must be unique.');
     }
+    final contactIds = data.students
+        .expand((student) => student.contacts)
+        .map((contact) => contact.id)
+        .toList();
+    if (contactIds.toSet().length != contactIds.length) {
+      throw const FormatException('Contact IDs must be unique.');
+    }
     final knownClasses = classIds.toSet();
     if (data.students.any(
       (student) => !knownClasses.contains(student.classId),
     )) {
       throw const FormatException(
         'Every student must reference a known class.',
+      );
+    }
+    final archivedClasses = data.classes
+        .where((item) => item.isArchived)
+        .map((item) => item.id)
+        .toSet();
+    if (data.students.any(
+      (student) =>
+          !student.isArchived && archivedClasses.contains(student.classId),
+    )) {
+      throw const FormatException(
+        'Active students cannot reference archived classes.',
       );
     }
   }

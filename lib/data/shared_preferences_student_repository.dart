@@ -87,7 +87,10 @@ class SharedPreferencesStudentRepository implements StudentRepository {
       return demo;
     }
     try {
-      return _codec.decode(stored);
+      final requiresMigration = _codec.requiresMigration(stored);
+      final decoded = _codec.decode(stored);
+      if (requiresMigration) await save(decoded);
+      return decoded;
     } on FormatException catch (error) {
       throw StudentStorageException(
         'Збережені дані учнів пошкоджені або несумісні.',

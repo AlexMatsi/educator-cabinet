@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:educator_cabinet/data/demo_repository.dart';
 import 'package:educator_cabinet/data/shared_preferences_student_repository.dart';
 import 'package:educator_cabinet/data/student_data_codec.dart';
@@ -71,6 +73,27 @@ void main() {
       codec.encode(await repository.load()),
       codec.encode(DemoRepository.data),
     );
+  });
+
+  test('legacy schema is persisted as version 2 after loading', () async {
+    final legacy = jsonDecode(codec.encode(DemoRepository.data));
+    legacy['schemaVersion'] = 1;
+    for (final item in legacy['classes'] as List) {
+      (item as Map).remove('archivedAt');
+    }
+    for (final item in legacy['students'] as List) {
+      (item as Map).remove('archivedAt');
+    }
+    final store = FakeStore(value: jsonEncode(legacy));
+    final repository = SharedPreferencesStudentRepository.withStore(
+      store: store,
+    );
+
+    final loaded = await repository.load();
+
+    expect(loaded.students, hasLength(DemoRepository.students.length));
+    expect(store.writes, 1);
+    expect(jsonDecode(store.value!)['schemaVersion'], 2);
   });
 
   test('an absent document is seeded once', () async {

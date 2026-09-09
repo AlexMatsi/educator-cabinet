@@ -10,12 +10,16 @@ class StudentDetail extends StatelessWidget {
     required this.className,
     required this.contactAction,
     this.embedded = false,
+    this.onEdit,
+    this.onArchive,
     super.key,
   });
   final Student student;
   final String className;
   final ContactAction contactAction;
   final bool embedded;
+  final VoidCallback? onEdit;
+  final VoidCallback? onArchive;
 
   Future<void> _call(BuildContext context, String phone) async {
     final result = await contactAction.call(phone);
@@ -38,6 +42,27 @@ class StudentDetail extends StatelessWidget {
         const SizedBox(height: 8),
         Text('$className • Кімната ${student.room} • ${student.sport}'),
         const SizedBox(height: 20),
+        if (onEdit != null || onArchive != null)
+          Wrap(
+            spacing: 8,
+            children: [
+              if (onEdit != null)
+                FilledButton.icon(
+                  key: const Key('edit-student'),
+                  onPressed: onEdit,
+                  icon: const Icon(Icons.edit_outlined),
+                  label: const Text('Редагувати'),
+                ),
+              if (onArchive != null)
+                OutlinedButton.icon(
+                  key: const Key('archive-student'),
+                  onPressed: onArchive,
+                  icon: const Icon(Icons.archive_outlined),
+                  label: const Text('Архівувати'),
+                ),
+            ],
+          ),
+        const SizedBox(height: 12),
         Text(
           student.hasPhone ? student.phone! : 'Номер не додано',
           style: Theme.of(context).textTheme.titleMedium,

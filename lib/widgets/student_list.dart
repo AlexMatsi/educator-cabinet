@@ -12,6 +12,9 @@ class StudentList extends StatelessWidget {
     required this.onQueryChanged,
     required this.onStudentTap,
     required this.onCall,
+    required this.onAddStudent,
+    required this.onManageClasses,
+    required this.onOpenArchive,
     this.selectedStudentId,
     super.key,
   });
@@ -23,14 +26,20 @@ class StudentList extends StatelessWidget {
   final ValueChanged<String> onQueryChanged;
   final ValueChanged<Student> onStudentTap;
   final ValueChanged<Student> onCall;
+  final VoidCallback onAddStudent;
+  final VoidCallback onManageClasses;
+  final VoidCallback onOpenArchive;
 
   @override
   Widget build(BuildContext context) {
     final normalized = query.trim().toLowerCase();
+    final activeClasses = data.classes
+        .where((item) => !item.isArchived)
+        .toList();
     final students = data.students
         .where((student) {
-          return (selectedClassId == null ||
-                  student.classId == selectedClassId) &&
+          return !student.isArchived &&
+              (selectedClassId == null || student.classId == selectedClassId) &&
               (normalized.isEmpty ||
                   student.fullName.toLowerCase().contains(normalized));
         })
@@ -56,7 +65,7 @@ class StudentList extends StatelessWidget {
                     value: 'all',
                     child: Text('Усі мої класи'),
                   ),
-                  ...data.classes.map(
+                  ...activeClasses.map(
                     (item) => DropdownMenuItem(
                       value: item.id,
                       child: Text(item.name),
@@ -65,6 +74,31 @@ class StudentList extends StatelessWidget {
                 ],
                 onChanged: (value) =>
                     onClassChanged(value == 'all' ? null : value),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  FilledButton.icon(
+                    key: const Key('add-student'),
+                    onPressed: onAddStudent,
+                    icon: const Icon(Icons.person_add_alt_1),
+                    label: const Text('Додати учня'),
+                  ),
+                  OutlinedButton.icon(
+                    key: const Key('manage-classes'),
+                    onPressed: onManageClasses,
+                    icon: const Icon(Icons.school_outlined),
+                    label: const Text('Класи'),
+                  ),
+                  TextButton.icon(
+                    key: const Key('open-archive'),
+                    onPressed: onOpenArchive,
+                    icon: const Icon(Icons.archive_outlined),
+                    label: const Text('Архів'),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
               TextField(
