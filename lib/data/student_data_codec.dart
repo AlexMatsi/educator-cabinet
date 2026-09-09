@@ -24,7 +24,7 @@ class StudentDataCodec {
       throw const FormatException('Unsupported student data schema.');
     }
     try {
-      return StudentData(
+      final data = StudentData(
         classes: (value['classes'] as List<Object?>)
             .map(
               (item) => StudentClass.fromJson(item as Map<String, Object?>),
@@ -34,8 +34,29 @@ class StudentDataCodec {
             .map((item) => Student.fromJson(item as Map<String, Object?>))
             .toList(growable: false),
       );
+      _validateIntegrity(data);
+      return data;
     } on TypeError catch (error) {
       throw FormatException('Invalid student data: $error');
+    }
+  }
+
+  void _validateIntegrity(StudentData data) {
+    final classIds = data.classes.map((item) => item.id).toList();
+    final studentIds = data.students.map((item) => item.id).toList();
+    if (classIds.toSet().length != classIds.length) {
+      throw const FormatException('Student class IDs must be unique.');
+    }
+    if (studentIds.toSet().length != studentIds.length) {
+      throw const FormatException('Student IDs must be unique.');
+    }
+    final knownClasses = classIds.toSet();
+    if (data.students.any(
+      (student) => !knownClasses.contains(student.classId),
+    )) {
+      throw const FormatException(
+        'Every student must reference a known class.',
+      );
     }
   }
 }

@@ -60,6 +60,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
   String? classId;
   String query = '';
   Student? selected;
+  Object? loadError;
 
   @override
   void initState() {
@@ -68,8 +69,16 @@ class _StudentsScreenState extends State<StudentsScreen> {
   }
 
   Future<void> _loadStudents() async {
-    final loaded = await widget.studentRepository.load();
-    if (mounted) setState(() => data = loaded);
+    setState(() {
+      data = null;
+      loadError = null;
+    });
+    try {
+      final loaded = await widget.studentRepository.load();
+      if (mounted) setState(() => data = loaded);
+    } on Object catch (error) {
+      if (mounted) setState(() => loadError = error);
+    }
   }
 
   String className(String id) =>
@@ -104,7 +113,30 @@ class _StudentsScreenState extends State<StudentsScreen> {
         ),
       ],
     ),
-    body: data == null
+    body: loadError != null
+        ? Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Не вдалося завантажити дані учнів. '
+                    'Збережені дані не змінено.',
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                    key: const Key('retry-student-load'),
+                    onPressed: _loadStudents,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Спробувати ще раз'),
+                  ),
+                ],
+              ),
+            ),
+          )
+        : data == null
         ? const Center(child: CircularProgressIndicator())
         : LayoutBuilder(
             builder: (context, constraints) {
