@@ -1,0 +1,40 @@
+name: Flutter CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Перевірка Flutter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Отримати код
+        uses: actions/checkout@v4
+
+      - name: Встановити Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.35.4
+          channel: stable
+          cache: true
+
+      - name: Отримати залежності
+        run: flutter pub get
+
+      - name: Перевірити форматування
+        run: dart format --output=none --set-exit-if-changed lib test
+
+      - name: Проаналізувати код
+        run: flutter analyze
+
+      - name: Запустити тести
+        run: flutter test
+
+      - name: Зібрати web
+        run: flutter build web
