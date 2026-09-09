@@ -6,8 +6,7 @@ import 'services/contact_action.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final studentRepository =
-      await SharedPreferencesStudentRepository.create();
+  final studentRepository = await SharedPreferencesStudentRepository.create();
   runApp(
     EducatorCabinetApp(
       contactAction: SystemContactAction(),

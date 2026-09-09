@@ -6,8 +6,6 @@ class StudentClass {
 
   Map<String, Object?> toJson() => {'id': id, 'name': name};
 
-  factory StudentClass.fromJson(Map<String, Object?> json) => StudentClass(
-    id: json['id'] as String,
-    name: json['name'] as String,
-  );
+  factory StudentClass.fromJson(Map<String, Object?> json) =>
+      StudentClass(id: json['id'] as String, name: json['name'] as String);
 }

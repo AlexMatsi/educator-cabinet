@@ -3,6 +3,7 @@ import 'package:educator_cabinet/data/shared_preferences_student_repository.dart
 import 'package:educator_cabinet/data/student_data_codec.dart';
 import 'package:educator_cabinet/models/student_data.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FakeStore implements StudentLocalStore {
   FakeStore({
@@ -34,7 +35,28 @@ class FakeStore implements StudentLocalStore {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   const codec = StudentDataCodec();
+
+  test('preferences preserve edited and empty data after reopening', () async {
+    SharedPreferences.setMockInitialValues({});
+    final preferences = await SharedPreferences.getInstance();
+    final first = SharedPreferencesStudentRepository(preferences: preferences);
+    await first.load();
+    final edited = StudentData(
+      classes: DemoRepository.classes,
+      students: [DemoRepository.students.first],
+    );
+    await first.save(edited);
+    await preferences.reload();
+    final reopened = SharedPreferencesStudentRepository(preferences: preferences);
+    expect(codec.encode(await reopened.load()), codec.encode(edited));
+    await reopened.save(const StudentData.empty());
+    await preferences.reload();
+    final empty = SharedPreferencesStudentRepository(preferences: preferences);
+    expect((await empty.load()).students, isEmpty);
+    expect((await empty.load()).classes, isEmpty);
+  });
 
   test('saved data is read back unchanged', () async {
     final store = FakeStore();

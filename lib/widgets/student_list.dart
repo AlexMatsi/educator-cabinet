@@ -27,11 +27,14 @@ class StudentList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final normalized = query.trim().toLowerCase();
-    final students = data.students.where((student) {
-      return (selectedClassId == null || student.classId == selectedClassId) &&
-          (normalized.isEmpty ||
-              student.fullName.toLowerCase().contains(normalized));
-    }).toList(growable: false);
+    final students = data.students
+        .where((student) {
+          return (selectedClassId == null ||
+                  student.classId == selectedClassId) &&
+              (normalized.isEmpty ||
+                  student.fullName.toLowerCase().contains(normalized));
+        })
+        .toList(growable: false);
     String className(String id) =>
         data.classes.firstWhere((item) => item.id == id).name;
     return Column(

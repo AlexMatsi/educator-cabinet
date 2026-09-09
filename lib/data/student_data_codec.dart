@@ -26,9 +26,7 @@ class StudentDataCodec {
     try {
       final data = StudentData(
         classes: (value['classes'] as List<Object?>)
-            .map(
-              (item) => StudentClass.fromJson(item as Map<String, Object?>),
-            )
+            .map((item) => StudentClass.fromJson(item as Map<String, Object?>))
             .toList(growable: false),
         students: (value['students'] as List<Object?>)
             .map((item) => Student.fromJson(item as Map<String, Object?>))
