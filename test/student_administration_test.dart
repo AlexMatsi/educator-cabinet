@@ -38,10 +38,8 @@ void main() {
     final id = data.classes.last.id;
     expect(id, 'class-new');
     data = await admin.renameClass(data, id, '10-Б');
-    expect(
-      data.classes.last,
-      predicate((item) => item.id == id && item.name == '10-Б'),
-    );
+    expect(data.classes.last.id, id);
+    expect(data.classes.last.name, '10-Б');
   });
 
   test('student create, edit and transfer preserve ID and contacts', () async {

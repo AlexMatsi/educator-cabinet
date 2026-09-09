@@ -215,8 +215,9 @@ class _StudentsScreenState extends State<StudentsScreen> {
     if (!await _confirm(
       'Архівувати учня?',
       'Учень зникне з активного списку, але запис можна буде відновити.',
-    ))
+    )) {
       return;
+    }
     final saved = await _commit(
       () => administration.archiveStudent(data!, student.id),
     );
@@ -247,7 +248,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
                               'Перейменувати клас',
                               item.name,
                             );
-                            if (name != null)
+                            if (name != null) {
                               await _commit(
                                 () => administration.renameClass(
                                   data!,
@@ -255,19 +256,22 @@ class _StudentsScreenState extends State<StudentsScreen> {
                                   name,
                                 ),
                               );
+                            }
                           }
                           if (action == 'archive' &&
                               await _confirm(
                                 'Архівувати клас?',
                                 'Клас можна буде відновити з архіву.',
-                              ))
+                              )) {
                             await _commit(
                               () => administration.archiveClass(data!, item.id),
                             );
-                          if (action == 'restore')
+                          }
+                          if (action == 'restore') {
                             await _commit(
                               () => administration.restoreClass(data!, item.id),
                             );
+                          }
                           refresh(() {});
                         },
                         itemBuilder: (_) => [
