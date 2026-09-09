@@ -6,12 +6,15 @@ class StudentClass {
   final DateTime? archivedAt;
   bool get isArchived => archivedAt != null;
 
-  StudentClass copyWith({String? name, DateTime? archivedAt, bool restore = false}) =>
-      StudentClass(
-        id: id,
-        name: name ?? this.name,
-        archivedAt: restore ? null : archivedAt ?? this.archivedAt,
-      );
+  StudentClass copyWith({
+    String? name,
+    DateTime? archivedAt,
+    bool restore = false,
+  }) => StudentClass(
+    id: id,
+    name: name ?? this.name,
+    archivedAt: restore ? null : archivedAt ?? this.archivedAt,
+  );
 
   Map<String, Object?> toJson() => {
     'id': id,
@@ -19,12 +22,11 @@ class StudentClass {
     'archivedAt': archivedAt?.toIso8601String(),
   };
 
-  factory StudentClass.fromJson(Map<String, Object?> json) =>
-      StudentClass(
-        id: json['id'] as String,
-        name: json['name'] as String,
-        archivedAt: json['archivedAt'] == null
-            ? null
-            : DateTime.parse(json['archivedAt'] as String),
-      );
+  factory StudentClass.fromJson(Map<String, Object?> json) => StudentClass(
+    id: json['id'] as String,
+    name: json['name'] as String,
+    archivedAt: json['archivedAt'] == null
+        ? null
+        : DateTime.parse(json['archivedAt'] as String),
+  );
 }

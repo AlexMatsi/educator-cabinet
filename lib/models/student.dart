@@ -30,6 +30,7 @@ class Student {
     String? room,
     String? sport,
     String? phone,
+    bool clearPhone = false,
     List<Contact>? contacts,
     DateTime? archivedAt,
     bool restore = false,
@@ -39,7 +40,7 @@ class Student {
     fullName: fullName ?? this.fullName,
     room: room ?? this.room,
     sport: sport ?? this.sport,
-    phone: phone ?? this.phone,
+    phone: clearPhone ? null : phone ?? this.phone,
     contacts: contacts ?? this.contacts,
     archivedAt: restore ? null : archivedAt ?? this.archivedAt,
   );

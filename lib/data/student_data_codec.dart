@@ -77,7 +77,8 @@ class StudentDataCodec {
         .map((item) => item.id)
         .toSet();
     if (data.students.any(
-      (student) => !student.isArchived && archivedClasses.contains(student.classId),
+      (student) =>
+          !student.isArchived && archivedClasses.contains(student.classId),
     )) {
       throw const FormatException(
         'Active students cannot reference archived classes.',

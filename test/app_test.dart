@@ -169,4 +169,33 @@ void main() {
     expect(find.text('Марія Весняна'), findsOneWidget);
     expect(find.text('Усі мої класи'), findsOneWidget);
   });
+
+  testWidgets('student form remains usable at 200% text and saves', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+    await tester.pumpWidget(testApp(RecordingContactAction()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('add-student')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Новий учень'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.enterText(
+      find.byKey(const Key('student-name-field')),
+      'Тестова Учениця',
+    );
+    await tester.ensureVisible(find.byKey(const Key('save-student')));
+    await tester.tap(find.byKey(const Key('save-student')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Тестова Учениця'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }

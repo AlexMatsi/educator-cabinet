@@ -33,12 +33,13 @@ class StudentList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final normalized = query.trim().toLowerCase();
-    final activeClasses = data.classes.where((item) => !item.isArchived).toList();
+    final activeClasses = data.classes
+        .where((item) => !item.isArchived)
+        .toList();
     final students = data.students
         .where((student) {
           return !student.isArchived &&
-              (selectedClassId == null ||
-                  student.classId == selectedClassId) &&
+              (selectedClassId == null || student.classId == selectedClassId) &&
               (normalized.isEmpty ||
                   student.fullName.toLowerCase().contains(normalized));
         })
