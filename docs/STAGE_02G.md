@@ -19,9 +19,10 @@
   Коротка поява системного prompt не запускає цикл повторного блокування.
 - У мобільній панелі є явна дія «Заблокувати». Після блокування дерево з
   даними видаляється, а репозиторій повторно читається лише після наступного
-  успішного входу.
+  успішного входу. Створення платформного репозиторію також відкладено до
+  успішного входу, тому SharedPreferences і Keychain не відкриваються раніше.
 - iOS має український `NSFaceIDUsageDescription`. Android декларує
-  `USE_BIOMETRIC` і використовує `FlutterFragmentActivity`. Налаштування
+  `USE_BIOMETRIC`, `FlutterFragmentActivity`, AppCompat launch theme та minSdk 24. Налаштування
   Keychain/Keystore та encrypted repository етапу 02В не змінено.
 
 ## Платформи, перевірки та межі

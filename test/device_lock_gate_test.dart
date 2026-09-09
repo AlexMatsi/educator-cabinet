@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:educator_cabinet/app.dart';
 import 'package:educator_cabinet/data/demo_repository.dart';
 import 'package:educator_cabinet/data/student_repository.dart';
+import 'package:educator_cabinet/data/student_repository_factory.dart';
 import 'package:educator_cabinet/models/student_data.dart';
 import 'package:educator_cabinet/services/contact_action.dart';
 import 'package:educator_cabinet/services/device_authenticator.dart';
@@ -58,16 +59,22 @@ void main() {
     final pending = Completer<DeviceAuthenticationResult>();
     auth.waitFor(pending);
     final repository = CountingRepository();
+    var factoryCalls = 0;
+    final lazyRepository = LazyStudentRepository(() async {
+      factoryCalls++;
+      return repository;
+    });
 
     await tester.pumpWidget(
       EducatorCabinetApp(
         contactAction: NoopContactAction(),
-        studentRepository: repository,
+        studentRepository: lazyRepository,
         requireDeviceAuthentication: true,
         deviceAuthenticator: auth,
       ),
     );
     await tester.pump();
+    expect(factoryCalls, 0);
     expect(repository.loads, 0);
     expect(find.byKey(const Key('device-lock-screen')), findsOneWidget);
 
@@ -75,6 +82,7 @@ void main() {
       const DeviceAuthenticationResult(DeviceAuthenticationStatus.success),
     );
     await tester.pumpAndSettle();
+    expect(factoryCalls, 1);
     expect(repository.loads, 1);
     expect(find.text('Марія Весняна'), findsOneWidget);
     await tester.pump();

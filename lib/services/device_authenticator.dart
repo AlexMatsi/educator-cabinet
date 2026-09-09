@@ -33,11 +33,8 @@ class LocalDeviceAuthenticator implements DeviceAuthenticator {
       }
       final authenticated = await _localAuthentication.authenticate(
         localizedReason: 'Розблокуйте кабінет вихователя',
-        options: const AuthenticationOptions(
-          biometricOnly: false,
-          stickyAuth: true,
-          useErrorDialogs: true,
-        ),
+        biometricOnly: false,
+        persistAcrossBackgrounding: true,
       );
       return DeviceAuthenticationResult(
         authenticated
