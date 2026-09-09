@@ -1,10 +1,9 @@
 import '../models/contact.dart';
 import '../models/student.dart';
 import '../models/student_class.dart';
+import '../models/student_directory.dart';
 
 class DemoRepository {
-  const DemoRepository();
-
   static const classes = <StudentClass>[
     StudentClass(id: 'class-lighthouse', name: '9-А'),
     StudentClass(id: 'class-horizon', name: '9-В'),
@@ -94,17 +93,8 @@ class DemoRepository {
     ),
   ];
 
-  List<Student> findStudents({String? classId, String query = ''}) {
-    final normalized = query.trim().toLowerCase();
-    return students
-        .where((student) {
-          return (classId == null || student.classId == classId) &&
-              (normalized.isEmpty ||
-                  student.fullName.toLowerCase().contains(normalized));
-        })
-        .toList(growable: false);
-  }
-
-  String className(String id) =>
-      classes.firstWhere((item) => item.id == id).name;
+  static const directory = StudentDirectory(
+    classes: classes,
+    students: students,
+  );
 }
