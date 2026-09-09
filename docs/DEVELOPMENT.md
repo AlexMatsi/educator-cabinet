@@ -57,7 +57,8 @@
 - Код етапу 02В реалізує AES-256-GCM, мобільний Keychain/Keystore,
   платформний вибір репозиторію та безпечну міграцію plaintext schema v2.
   Узгоджені вимоги й межі зафіксовано в `docs/STAGE_02V.md`.
-- У Linux-середовищі Flutter SDK недоступний, тому lock-файл має бути
-  сформований `flutter pub get`, а повна команда `bash tool/check.sh` — фактично
-  виконана в GitHub Actions для актуального head перед merge. CI тут не
-  оголошується успішним без такого запуску; iOS окремо перевіряється на macOS.
+- `pubspec.lock` сформовано Flutter 3.35.4 з сумісним
+  `flutter_secure_storage 10.3.1`. Для актуального head у GitHub Actions
+  команда `bash tool/check.sh` пройшла форматування, аналіз, 47 тестів і
+  release-збірку web. Native iOS/Android runtime окремо перевіряється на
+  відповідних платформах.

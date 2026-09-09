@@ -12,8 +12,8 @@
   12-байтовий nonce; JSON-envelope версії 1 містить назву алгоритму, nonce,
   ciphertext і authentication tag у Base64.
 - `KeyProvider` відокремлює роботу з ключем. На мобільних платформах випадковий
-  256-бітний ключ зберігається через `flutter_secure_storage`: Android —
-  Keystore/EncryptedSharedPreferences, iOS — Keychain з accessibility
+  256-бітний ключ зберігається через `flutter_secure_storage` 10.3.1: Android —
+  Keystore з RSA-OAEP та AES-GCM, iOS — Keychain з accessibility
   `first_unlock_this_device`, тому ключ не мігрує на інший пристрій.
 - iOS та Android створюють `EncryptedStudentRepository`. Web і desktop явно
   залишаються демонстраційним plaintext-сховищем SharedPreferences та не мають
@@ -25,13 +25,15 @@
   запису чи secure storage повертають контрольоване українське повідомлення.
   Наявні пошкоджені/зашифровані дані ніколи не замінюються demo seed.
 - Android використовує `minSdk 23`; backup застосунку вимкнено, щоб ключ і
-  ciphertext не відновлювалися як несумісна пара.
+  ciphertext не відновлювалися як несумісна пара. Для iOS додано Keychain
+  entitlements до Debug/Profile і Release конфігурацій.
 
 ## Перевірки та межі
 
 Автотести перевіряють envelope і різні nonce, round-trip, tampering/auth
 failure, невідому версію, втрачений ключ, повторне відкриття, безпечну міграцію,
-невдалий запис/видалення та помилки secure storage. `bash tool/check.sh` є
+невдалий запис/видалення, відновлення незавершеного видалення plaintext,
+розбіжність двох копій, відсутність повторного seed та помилки secure storage. `bash tool/check.sh` є
 єдиною повною Linux/web-перевіркою; мобільні збірки додатково потребують
 відповідних SDK та реальних платформ.
 
