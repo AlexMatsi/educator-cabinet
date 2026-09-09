@@ -31,3 +31,6 @@ jobs:
 
       - name: Перевірити залежності, код, тести та web-збірку
         run: bash tool/check.sh
+
+      - name: Разово перевірити Android debug-збірку
+        run: flutter build apk --debug
