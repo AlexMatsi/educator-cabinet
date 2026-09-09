@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'data/student_repository.dart';
+import 'data/student_administration.dart';
 import 'models/student.dart';
 import 'models/student_data.dart';
 import 'services/contact_action.dart';
 import 'widgets/student_detail.dart';
 import 'widgets/student_list.dart';
+import 'widgets/student_form.dart';
 
 class EducatorCabinetApp extends StatelessWidget {
   const EducatorCabinetApp({
@@ -61,6 +63,10 @@ class _StudentsScreenState extends State<StudentsScreen> {
   String query = '';
   Student? selected;
   Object? loadError;
+  late final StudentAdministration administration = StudentAdministration(
+    repository: widget.studentRepository,
+    ids: TimestampIdGenerator(),
+  );
 
   @override
   void initState() {
@@ -94,10 +100,78 @@ class _StudentsScreenState extends State<StudentsScreen> {
             student: student,
             className: className(student.classId),
             contactAction: widget.contactAction,
+            onEdit: () => _editStudent(student),
+            onArchive: () => _confirmArchiveStudent(student),
           ),
         ),
       );
     }
+  }
+
+  Future<void> _commit(Future<StudentData> Function() operation) async {
+    try {
+      final saved = await operation();
+      if (mounted) setState(() { data = saved; selected = selected == null ? null : saved.students.where((e) => e.id == selected!.id).firstOrNull; });
+    } on Object catch (error) {
+      if (!mounted) return;
+      final message = error is StudentValidationException
+          ? error.message
+          : 'Не вдалося зберегти зміни. Попередні дані залишено.';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), action: SnackBarAction(label: 'Повторити', onPressed: () => _commit(operation))));
+    }
+  }
+
+  Future<void> _editStudent([Student? student]) async {
+    final active = data!.classes.where((item) => !item.isArchived).toList();
+    if (active.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Спочатку створіть активний клас.')));
+      return;
+    }
+    final result = await Navigator.of(context).push<StudentFormResult>(MaterialPageRoute(builder: (_) => StudentForm(classes: active, student: student)));
+    if (result == null || !mounted) return;
+    await _commit(() => result.isNew
+        ? administration.createStudent(data!, fullName: result.student.fullName, classId: result.student.classId, room: result.student.room, sport: result.student.sport, phone: result.student.phone, contacts: result.student.contacts)
+        : administration.updateStudent(data!, result.student));
+    if (mounted && Navigator.of(context).canPop()) Navigator.of(context).pop();
+  }
+
+  Future<bool> _confirm(String title, String body) async => await showDialog<bool>(context: context, builder: (_) => AlertDialog(
+    title: Text(title), content: Text(body), actions: [TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Скасувати')), FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Підтвердити'))],
+  )) ?? false;
+
+  Future<void> _confirmArchiveStudent(Student student) async {
+    if (!await _confirm('Архівувати учня?', 'Учень зникне з активного списку, але запис можна буде відновити.')) return;
+    await _commit(() => administration.archiveStudent(data!, student.id));
+    if (mounted && Navigator.of(context).canPop()) Navigator.of(context).pop();
+  }
+
+  Future<void> _manageClasses() async {
+    await showDialog<void>(context: context, builder: (dialogContext) => StatefulBuilder(builder: (_, refresh) => AlertDialog(
+      title: const Text('Керування класами'),
+      content: SizedBox(width: 420, child: ListView(shrinkWrap: true, children: data!.classes.map((item) => ListTile(
+        title: Text(item.name), subtitle: Text(item.isArchived ? 'В архіві' : 'Активний'),
+        trailing: PopupMenuButton<String>(onSelected: (action) async {
+          if (action == 'rename') { final name = await _askName('Перейменувати клас', item.name); if (name != null) await _commit(() => administration.renameClass(data!, item.id, name)); }
+          if (action == 'archive' && await _confirm('Архівувати клас?', 'Клас можна буде відновити з архіву.')) await _commit(() => administration.archiveClass(data!, item.id));
+          if (action == 'restore') await _commit(() => administration.restoreClass(data!, item.id));
+          refresh(() {});
+        }, itemBuilder: (_) => [const PopupMenuItem(value: 'rename', child: Text('Перейменувати')), PopupMenuItem(value: item.isArchived ? 'restore' : 'archive', child: Text(item.isArchived ? 'Відновити' : 'Архівувати'))]),
+      )).toList())),
+      actions: [TextButton(onPressed: () async { final name = await _askName('Новий клас', ''); if (name != null) { await _commit(() => administration.createClass(data!, name)); refresh(() {}); } }, child: const Text('Додати клас')), FilledButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Готово'))],
+    )));
+  }
+
+  Future<String?> _askName(String title, String initial) async {
+    final controller = TextEditingController(text: initial);
+    final result = await showDialog<String>(context: context, builder: (_) => AlertDialog(title: Text(title), content: TextField(controller: controller, autofocus: true, decoration: const InputDecoration(labelText: 'Назва класу')), actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Скасувати')), FilledButton(onPressed: () => Navigator.pop(context, controller.text), child: const Text('Зберегти'))]));
+    controller.dispose(); return result;
+  }
+
+  Future<void> _openArchive() async {
+    await showDialog<void>(context: context, builder: (dialogContext) => StatefulBuilder(builder: (_, refresh) {
+      final archived = data!.students.where((item) => item.isArchived).toList();
+      return AlertDialog(title: const Text('Архів учнів'), content: SizedBox(width: 440, child: archived.isEmpty ? const Text('Архів порожній') : ListView(shrinkWrap: true, children: archived.map((student) => ListTile(title: Text(student.fullName), subtitle: Text('Архівовано: ${student.archivedAt!.toLocal().toString().split(' ').first}'), trailing: TextButton(onPressed: () async { await _commit(() => administration.restoreStudent(data!, student.id)); refresh(() {}); }, child: const Text('Відновити')))).toList())), actions: [FilledButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Закрити'))]);
+    }));
   }
 
   @override
@@ -153,6 +227,9 @@ class _StudentsScreenState extends State<StudentsScreen> {
                 onQueryChanged: (value) => setState(() => query = value),
                 onStudentTap: (student) => openStudent(student, wide),
                 onCall: (student) => _call(student.phone, student.hasPhone),
+                onAddStudent: _editStudent,
+                onManageClasses: _manageClasses,
+                onOpenArchive: _openArchive,
               );
               if (!wide) {
                 return Center(
@@ -177,6 +254,8 @@ class _StudentsScreenState extends State<StudentsScreen> {
                                 className: className(selected!.classId),
                                 contactAction: widget.contactAction,
                                 embedded: true,
+                                onEdit: () => _editStudent(selected),
+                                onArchive: () => _confirmArchiveStudent(selected!),
                               ),
                       ),
                     ),

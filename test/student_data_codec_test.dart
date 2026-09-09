@@ -20,6 +20,22 @@ void main() {
     expect(json['schemaVersion'], StudentDataCodec.schemaVersion);
   });
 
+  test('schema v1 migrates without losing existing records', () {
+    final legacy = jsonDecode(codec.encode(DemoRepository.data)) as Map<String, Object?>;
+    legacy['schemaVersion'] = 1;
+    for (final item in legacy['classes'] as List) {
+      (item as Map).remove('archivedAt');
+    }
+    for (final item in legacy['students'] as List) {
+      (item as Map).remove('archivedAt');
+    }
+    final decoded = codec.decode(jsonEncode(legacy));
+    expect(decoded.classes.map((e) => e.id), DemoRepository.classes.map((e) => e.id));
+    expect(decoded.students.map((e) => e.id), DemoRepository.students.map((e) => e.id));
+    expect(decoded.students.every((e) => !e.isArchived), isTrue);
+    expect(jsonDecode(codec.encode(decoded))['schemaVersion'], 2);
+  });
+
   test('unknown schema version is rejected', () {
     final json = jsonDecode(codec.encode(DemoRepository.data));
     json['schemaVersion'] = StudentDataCodec.schemaVersion + 1;
