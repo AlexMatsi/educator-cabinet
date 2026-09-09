@@ -8,8 +8,10 @@ android/.gradle/
 android/local.properties
 ios/Flutter/ephemeral/
 ios/Pods/
-ios/Runner.xcworkspace/
 *.iml
 .idea/
 .vscode/
 .DS_Store
+
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh

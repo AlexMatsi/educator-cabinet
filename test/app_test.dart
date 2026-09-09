@@ -16,9 +16,23 @@ class RecordingContactAction implements ContactAction {
 }
 
 void main() {
-  testWidgets('class choice, search and card open the correct student', (tester) async {
-    await tester.pumpWidget(EducatorCabinetApp(contactAction: RecordingContactAction()));
-    expect(find.byType(ListTile), findsNWidgets(6));
+  testWidgets('class choice, search and card open the correct student', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      EducatorCabinetApp(contactAction: RecordingContactAction()),
+    );
+    expect(find.text('Усі мої класи'), findsOneWidget);
+    expect(find.text('Марія Весняна'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Лев Барвінковий'),
+      200,
+      scrollable: find.descendant(
+        of: find.byType(ListView),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(find.text('Лев Барвінковий'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('class-selector')));
     await tester.pumpAndSettle();
@@ -33,18 +47,81 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('student-full-name')), findsOneWidget);
     expect(find.text('Номер не додано'), findsWidgets);
-    expect(tester.widget<FilledButton>(find.byKey(const Key('call-student'))).onPressed, isNull);
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const Key('call-student')))
+          .onPressed,
+      isNull,
+    );
   });
 
-  testWidgets('calls exactly the selected contact through the adapter', (tester) async {
+  testWidgets('calls exactly the selected contact through the adapter', (
+    tester,
+  ) async {
     final action = RecordingContactAction();
     const student = Student(
-      id: 'test-student', classId: 'test-class', fullName: 'Тестова Учениця', room: '1', sport: 'Тест', phone: '+380000000001',
-      contacts: [Contact(id: 'test-adult', name: 'Тестова Представниця', role: 'Представниця', phone: '+380000000002')],
+      id: 'test-student',
+      classId: 'test-class',
+      fullName: 'Тестова Учениця',
+      room: '1',
+      sport: 'Тест',
+      phone: '+380000000001',
+      contacts: [
+        Contact(
+          id: 'test-adult',
+          name: 'Тестова Представниця',
+          role: 'Представниця',
+          phone: '+380000000002',
+        ),
+      ],
     );
-    await tester.pumpWidget(MaterialApp(home: StudentDetail(student: student, className: 'Тест', contactAction: action)));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: StudentDetail(
+          student: student,
+          className: 'Тест',
+          contactAction: action,
+        ),
+      ),
+    );
     await tester.tap(find.byKey(const Key('call-test-adult')));
     await tester.pump();
     expect(action.calls, ['+380000000002']);
+    await tester.tap(find.byKey(const Key('call-student')));
+    await tester.pump();
+    expect(action.calls, ['+380000000002', '+380000000001']);
+  });
+  testWidgets('phone layout and enlarged text remain usable', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await tester.pumpWidget(
+      EducatorCabinetApp(contactAction: RecordingContactAction()),
+    );
+    expect(tester.takeException(), isNull);
+    await tester.tap(find.text('Марія Весняна'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('student-full-name')), findsOneWidget);
+    expect(find.byTooltip('Назад'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('class selector returns to all classes', (tester) async {
+    await tester.pumpWidget(
+      EducatorCabinetApp(contactAction: RecordingContactAction()),
+    );
+    await tester.tap(find.byKey(const Key('class-selector')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('9-В').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('class-selector')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Усі мої класи').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Марія Весняна'), findsOneWidget);
+    expect(find.text('Усі мої класи'), findsOneWidget);
   });
 }
