@@ -6,6 +6,7 @@ import 'package:educator_cabinet/data/encrypted_student_repository.dart';
 import 'package:educator_cabinet/data/key_provider.dart';
 import 'package:educator_cabinet/data/shared_preferences_student_repository.dart';
 import 'package:educator_cabinet/data/student_data_codec.dart';
+import 'package:educator_cabinet/models/student_data.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class MemoryStore implements StudentLocalStore {
@@ -43,8 +44,9 @@ class FakeKeyProvider implements KeyProvider {
 
   @override
   Future<List<int>?> read() async {
-    if (readError case final error?)
+    if (readError case final error?) {
       throw KeyProviderException('secure read', error);
+    }
     return _key;
   }
 
