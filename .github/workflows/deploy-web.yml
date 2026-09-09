@@ -1,0 +1,61 @@
+name: Deploy web demo
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Зібрати web-демо
+    runs-on: ubuntu-latest
+    steps:
+      - name: Отримати код
+        uses: actions/checkout@v6
+
+      - name: Встановити Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.35.4
+          channel: stable
+          cache: true
+
+      - name: Перевірити lock-файл
+        run: |
+          flutter pub get --enforce-lockfile
+          git diff --exit-code -- pubspec.lock
+
+      - name: Зібрати GitHub Pages
+        run: flutter build web --release --base-href "/educator-cabinet/"
+
+      - name: Налаштувати GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Завантажити артефакт
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: build/web
+
+  deploy:
+    name: Опублікувати web-демо
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Опублікувати GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
